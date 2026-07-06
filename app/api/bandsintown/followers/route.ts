@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import {
   BandsintownArtistData,
@@ -6,8 +6,6 @@ import {
 } from '@/types/bandsintown';
 import fs from 'fs';
 import path from 'path';
-
-const DATA_FILE = path.join(process.cwd(), 'data', 'followers-history.json');
 
 interface HistoricalData {
   timestamp: string;
@@ -18,6 +16,19 @@ interface StoredData {
   history: HistoricalData[];
 }
 
+function getDataFilePath(artistName: string): string {
+  const sanitizedName = artistName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return path.join(
+    process.cwd(),
+    'data',
+    `followers-${sanitizedName}.json`
+  );
+}
+
 function ensureDataDirectory() {
   const dataDir = path.join(process.cwd(), 'data');
   if (!fs.existsSync(dataDir)) {
@@ -25,13 +36,14 @@ function ensureDataDirectory() {
   }
 }
 
-function readHistoricalData(): StoredData {
+function readHistoricalData(artistName: string): StoredData {
   ensureDataDirectory();
-  if (!fs.existsSync(DATA_FILE)) {
+  const dataFile = getDataFilePath(artistName);
+  if (!fs.existsSync(dataFile)) {
     return { history: [] };
   }
   try {
-    const data = fs.readFileSync(DATA_FILE, 'utf-8');
+    const data = fs.readFileSync(dataFile, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
     console.error('Error reading historical data:', error);
@@ -39,9 +51,10 @@ function readHistoricalData(): StoredData {
   }
 }
 
-function writeHistoricalData(data: StoredData) {
+function writeHistoricalData(artistName: string, data: StoredData) {
   ensureDataDirectory();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  const dataFile = getDataFilePath(artistName);
+  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
 }
 
 function calculate30DayChange(history: HistoricalData[], currentCount: number): number {
@@ -65,18 +78,18 @@ function calculate30DayChange(history: HistoricalData[], currentCount: number): 
   return 0;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const artistName = process.env.BANDSINTOWN_ARTIST_NAME;
+    const searchParams = request.nextUrl.searchParams;
+    const artistName = searchParams.get('artist');
     const appId = process.env.BANDSINTOWN_APP_ID || 'artist-cms';
 
     if (!artistName) {
       return NextResponse.json(
         {
-          error:
-            'BANDSINTOWN_ARTIST_NAME environment variable is not configured',
+          error: 'Artist name is required. Please provide ?artist=ArtistName',
         },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
@@ -91,7 +104,7 @@ export async function GET() {
     const artistData = response.data;
     const currentFollowers = artistData.tracker_count;
 
-    const storedData = readHistoricalData();
+    const storedData = readHistoricalData(artistName);
 
     const now = new Date().toISOString();
     storedData.history.unshift({
@@ -101,7 +114,7 @@ export async function GET() {
 
     storedData.history = storedData.history.slice(0, 100);
 
-    writeHistoricalData(storedData);
+    writeHistoricalData(artistName, storedData);
 
     const change30Days = calculate30DayChange(
       storedData.history,

@@ -5,8 +5,9 @@ A content management system for artists with analytics integration.
 ## Features
 
 - **Analytics Dashboard**: Track your artist metrics in real-time
-- **Live Metrics**: View your Bandsintown follower count and 30-day growth
-- **Historical Tracking**: Automatic tracking of follower changes over time
+- **Live Metrics**: View Bandsintown follower counts for multiple artists with 30-day growth tracking
+- **Multi-Artist Support**: Search and track metrics for any artist on Bandsintown
+- **Historical Tracking**: Automatic tracking of follower changes over time per artist
 
 ## Getting Started
 
@@ -28,15 +29,17 @@ cd artist-cms
 npm install
 ```
 
-3. Configure environment variables:
+3. (Optional) Configure environment variables:
 ```bash
 cp .env.example .env.local
 ```
 
-Edit `.env.local` and add your Bandsintown artist name:
+If you want to use a custom Bandsintown App ID, edit `.env.local`:
 ```
-BANDSINTOWN_ARTIST_NAME=Your Artist Name
+BANDSINTOWN_APP_ID=your-app-id
 ```
+
+Otherwise, the default `artist-cms` app ID will be used.
 
 4. Run the development server:
 ```bash
@@ -47,8 +50,9 @@ npm run dev
 
 ## Environment Variables
 
-- `BANDSINTOWN_ARTIST_NAME` (required): Your artist name as it appears on Bandsintown
 - `BANDSINTOWN_APP_ID` (optional): Your Bandsintown App ID (defaults to 'artist-cms')
+
+No artist-specific configuration is required - the system supports multiple artists dynamically.
 
 ## Usage
 
@@ -58,12 +62,16 @@ Navigate to `/analytics` to view your analytics dashboard.
 
 ### Live Metrics
 
-Navigate to `/analytics/live` to view real-time Bandsintown metrics including:
-- Current follower count
-- 30-day follower change
-- Last updated timestamp
+Navigate to `/analytics/live` to view real-time Bandsintown metrics for any artist:
 
-The system automatically tracks historical data to calculate trends.
+1. Enter an artist name (e.g., "Coldplay", "Taylor Swift")
+2. Click "Get Data" to fetch their metrics
+3. View:
+   - Current follower count
+   - 30-day follower change
+   - Last updated timestamp
+
+The system automatically tracks historical data per artist to calculate trends. You can search and track multiple artists - each artist's data is stored separately.
 
 ## Project Structure
 
