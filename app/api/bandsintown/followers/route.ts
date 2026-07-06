@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import axios from 'axios';
 import {
   BandsintownArtistData,
@@ -65,7 +65,7 @@ function calculate30DayChange(history: HistoricalData[], currentCount: number): 
   return 0;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const artistName = process.env.BANDSINTOWN_ARTIST_NAME;
     const appId = process.env.BANDSINTOWN_APP_ID || 'artist-cms';
